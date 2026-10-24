@@ -1,64 +1,236 @@
-const form = document.querySelector("#prediction-form");
-const resetBtn = document.querySelector("#reset-btn");
-const submitBtn = document.querySelector("#submit-btn");
-const errorBox = document.querySelector("#form-error");
-const emptyResult = document.querySelector("#empty-result");
-const filledResult = document.querySelector("#filled-result");
-const statusPill = document.querySelector("#result-status");
+"use strict";
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  errorBox.textContent = "";
-  if (!form.reportValidity()) return;
+// =====================================================
+// GLUCOCHECK - FRONTEND LOGIC
+// API endpoint and existing HTML IDs are preserved.
+// =====================================================
 
-  const payload = Object.fromEntries(new FormData(form).entries());
-  submitBtn.disabled = true;
-  submitBtn.querySelector("span").textContent = "Calculating…";
-  statusPill.textContent = "Processing";
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("prediction-form");
+    const submitBtn = document.getElementById("submit-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const formError = document.getElementById("form-error");
 
-  try {
-    const response = await fetch("/api/predict", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      const messages = Object.entries(data.errors || {}).map(([field, msg]) => `${field}: ${msg}`);
-      throw new Error(messages.join(" "));
+    const resultCard = document.getElementById("result-card");
+    const resultStatus = document.getElementById("result-status");
+    const emptyResult = document.getElementById("empty-result");
+    const filledResult = document.getElementById("filled-result");
+
+    const probabilityElement = document.getElementById("probability");
+    const progressFill = document.getElementById("progress-fill");
+    const resultVerdict = document.getElementById("result-verdict");
+    const resultMessage = document.getElementById("result-message");
+
+    if (!form) {
+        console.error("GlucoCheck: prediction form was not found.");
+        return;
     }
 
-    emptyResult.classList.add("hidden");
-    filledResult.classList.remove("hidden");
-    document.querySelector("#probability").textContent = data.probability ?? "—";
-    document.querySelector("#progress-fill").style.width = `${data.probability ?? 0}%`;
-    document.querySelector("#result-verdict").textContent = data.label;
-    document.querySelector("#result-message").textContent = data.message;
-    statusPill.textContent = "Estimate ready";
-    statusPill.style.background = data.prediction === 1 ? "#fff0ed" : "#e9f8f0";
-    statusPill.style.color = data.prediction === 1 ? "#bf6656" : "#32966b";
-    document.querySelector("#result-verdict").style.color = data.prediction === 1 ? "#bd6958" : "#32966b";
-  } catch (error) {
-    errorBox.textContent = error.message || "Unable to calculate right now. Please try again.";
-    statusPill.textContent = "Could not calculate";
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.querySelector("span").textContent = "Generate estimate";
-  }
-});
+    // Keep the original Flask feature names and model order.
+    const featureNames = [
+        "Pregnancies",
+        "Glucose",
+        "BloodPressure",
+        "SkinThickness",
+        "Insulin",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age"
+    ];
 
-resetBtn.addEventListener("click", () => {
-  form.reset();
-  errorBox.textContent = "";
-  emptyResult.classList.remove("hidden");
-  filledResult.classList.add("hidden");
-  statusPill.textContent = "Awaiting input";
-  statusPill.removeAttribute("style");
-  document.querySelector("#progress-fill").style.width = "0%";
-});
+    // Show a message inside the existing error element.
+    function showError(message) {
+        formError.textContent = message;
+        formError.hidden = false;
+    }
 
-// Smoothly focus the first field after a reset.
-resetBtn.addEventListener("click", () => {
-  const first = form.querySelector('input[name="Age"]');
-  if (first) first.focus({preventScroll: true});
+    // Clear previous errors.
+    function clearError() {
+        formError.textContent = "";
+        formError.hidden = true;
+    }
+
+    // Restore the initial result panel.
+    function resetResult() {
+        emptyResult.classList.remove("hidden");
+        filledResult.classList.add("hidden");
+
+        resultStatus.textContent = "Awaiting input";
+        probabilityElement.textContent = "0";
+        progressFill.style.width = "0%";
+        resultVerdict.textContent = "Prediction result";
+        resultMessage.textContent = "";
+
+        resultCard.classList.remove("has-result", "high-risk", "low-risk");
+    }
+
+    // Read all fields and construct the payload expected by Flask.
+    function collectFormData() {
+        const payload = {};
+
+        for (const feature of featureNames) {
+            const input = form.elements.namedItem(feature);
+
+            if (!input || input.value.trim() === "") {
+                throw new Error(`Please enter a value for ${feature}.`);
+            }
+
+            const value = Number(input.value);
+
+            if (!Number.isFinite(value)) {
+                throw new Error(`Please enter a valid number for ${feature}.`);
+            }
+
+            payload[feature] = value;
+        }
+
+        return payload;
+    }
+
+    // Basic browser-side validation.
+    function validatePayload(payload) {
+        for (const feature of featureNames) {
+            const input = form.elements.namedItem(feature);
+
+            if (input && !input.checkValidity()) {
+                input.reportValidity();
+                return false;
+            }
+
+            if (!Number.isFinite(payload[feature])) {
+                showError(`Invalid value for ${feature}.`);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Display the prediction returned by the Flask backend.
+    function displayResult(data) {
+        const probability = Number(data.probability);
+        const prediction = Number(data.prediction);
+
+        if (
+            !Number.isFinite(probability) ||
+            probability < 0 ||
+            probability > 100 ||
+            !Number.isFinite(prediction)
+        ) {
+            throw new Error("The server returned an invalid prediction result.");
+        }
+
+        const boundedProbability = Math.min(100, Math.max(0, probability));
+        const isPositive = prediction === 1;
+
+        emptyResult.classList.add("hidden");
+        filledResult.classList.remove("hidden");
+
+        resultCard.classList.add("has-result");
+        resultCard.classList.toggle("high-risk", isPositive);
+        resultCard.classList.toggle("low-risk", !isPositive);
+
+        resultStatus.textContent = data.label ||
+            (isPositive ? "Elevated model-estimated risk" : "Lower model-estimated risk");
+
+        probabilityElement.textContent = boundedProbability.toFixed(1);
+        progressFill.style.width = `${boundedProbability}%`;
+
+        resultVerdict.textContent = isPositive
+            ? "Positive model prediction"
+            : "Negative model prediction";
+
+        resultMessage.textContent = data.message ||
+            "This is a machine-learning estimate, not a clinical diagnosis.";
+
+        // Move the user's focus to the updated result panel.
+        resultCard.setAttribute("tabindex", "-1");
+        resultCard.focus({ preventScroll: true });
+    }
+
+    // Submit the form to the existing Flask endpoint.
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearError();
+
+        let payload;
+
+        try {
+            payload = collectFormData();
+        } catch (error) {
+            showError(error.message);
+            return;
+        }
+
+        if (!validatePayload(payload)) {
+            return;
+        }
+
+        const originalButtonContent = submitBtn.innerHTML;
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "<span>Analyzing signals...</span><span>◌</span>";
+        form.setAttribute("aria-busy", "true");
+
+        try {
+            const response = await fetch("/api/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            let data;
+
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error("The server returned an unreadable response.");
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    data.error ||
+                    data.message ||
+                    `Prediction request failed (HTTP ${response.status}).`
+                );
+            }
+
+            displayResult(data);
+        } catch (error) {
+            console.error("GlucoCheck prediction error:", error);
+            showError(
+                error.message ||
+                "Unable to connect to the prediction service. Please try again."
+            );
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalButtonContent;
+            form.removeAttribute("aria-busy");
+        }
+    });
+
+    // Reset fields and restore the initial result state.
+    form.addEventListener("reset", () => {
+        window.setTimeout(() => {
+            clearError();
+            resetResult();
+        }, 0);
+    });
+
+    if (resetBtn) {
+        resetBtn.addEventListener("click", clearError);
+    }
+
+    // Clear error messages as the user edits the form.
+    form.addEventListener("input", () => {
+        if (!formError.hidden) {
+            clearError();
+        }
+    });
+
+    // Initial state.
+    resetResult();
 });
