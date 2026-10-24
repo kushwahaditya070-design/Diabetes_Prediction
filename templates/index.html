@@ -1,111 +1,432 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f8fc">
-  <title>GlucoCheck — Diabetes Risk Estimator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GlucoCheck | Medical Intelligence</title>
+    <meta name="theme-color" content="#09090b">
+    <meta name="description" content="GlucoCheck diabetes risk prediction interface">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
 </head>
+
 <body>
-  <div class="app-shell">
+<div class="app-shell">
+
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-      <a class="brand" href="/" aria-label="GlucoCheck home">
-        <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3.5c-3.8 5-9 10.4-9 16.2a9 9 0 0 0 18 0C25 13.9 19.8 8.5 16 3.5Z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M11.5 18.5h9M16 14v9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
-        <span>gluco<span class="brand-light">check</span></span>
-      </a>
-      <div class="side-label">WORKSPACE</div>
-      <a class="nav-item active" href="#assessment"><span class="nav-icon">◫</span> Risk assessment</a>
-      <a class="nav-item" href="#how-it-works"><span class="nav-icon">◎</span> How it works</a>
-      <div class="sidebar-bottom">
-        <div class="help-card">
-          <span class="help-icon">✦</span>
-          <strong>Your health, in focus.</strong>
-          <p>A simple screening aid to help you prepare for a conversation with a healthcare professional.</p>
+        <div class="brand">
+            <div class="brand-mark">G<span>+</span></div>
+            <div>
+                <strong>GLUCOCHECK</strong>
+                <small>MEDICAL INTELLIGENCE</small>
+            </div>
         </div>
-        <div class="side-footer"><span class="status-dot"></span> Local model connected</div>
-      </div>
+
+        <div class="side-label">WORKSPACE</div>
+
+        <nav>
+            <a href="#assessment" class="nav-item active">
+                <span>▦</span> Risk Assessment
+            </a>
+            <a href="#how-it-works" class="nav-item">
+                <span>⌘</span> System Overview
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="help-card">
+                <span class="section-kicker">SYSTEM STATUS</span>
+                <p><span class="status-dot"></span> Prediction interface ready</p>
+                <small>AI-assisted risk estimation</small>
+            </div>
+
+            <div class="side-footer">
+                <span>GLUCOCHECK // V1.0</span>
+                <span>LOCAL INFERENCE</span>
+            </div>
+        </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="main-content">
-      <header class="topbar">
-        <div class="breadcrumb">Workspace <span>/</span> <strong>Risk assessment</strong></div>
-        <div class="topbar-right"><span class="secure-pill"><span>✓</span> Private session</span><div class="avatar">G</div></div>
-      </header>
 
-      <section class="page-intro">
-        <div>
-          <div class="eyebrow"><span class="eyebrow-dot"></span> PREVENTIVE HEALTH TOOL</div>
-          <h1>Understand your <span>health signals.</span></h1>
-          <p class="intro-copy">Enter a few health measurements to receive a model-generated diabetes risk estimate.</p>
-        </div>
-        <div class="intro-illustration" aria-hidden="true">
-          <div class="orb orb-one"></div><div class="orb orb-two"></div>
-          <svg viewBox="0 0 160 130"><path d="M19 72h28l12-29 21 59 15-40 12 10h34" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="80" cy="65" r="55" fill="none" stroke="#ffffff" stroke-opacity=".25" stroke-width="1.5"/></svg>
-        </div>
-      </section>
+        <header class="topbar">
+            <div class="breadcrumb">
+                WORKSPACE <span>/</span> <strong>RISK ASSESSMENT</strong>
+            </div>
 
-      <div class="content-grid" id="assessment">
-        <section class="form-card">
-          <div class="card-heading">
-            <div><div class="section-kicker">YOUR INFORMATION</div><h2>Health assessment</h2><p>Use your most recent measurements where possible.</p></div>
-            <span class="step-pill">8 inputs</span>
-          </div>
-          <form id="prediction-form">
-            <div class="form-section-title"><span class="number">01</span><div><strong>Personal details</strong><small>Basic information</small></div></div>
-            <div class="fields-grid">
-              <label class="field"><span>Age <i>years</i></span><div class="input-wrap"><input name="Age" type="number" min="1" max="120" value="30" required><span class="unit">yrs</span></div></label>
-              <label class="field"><span>Pregnancies <i>if applicable</i></span><div class="input-wrap"><input name="Pregnancies" type="number" min="0" max="20" value="0" required><span class="unit">count</span></div></label>
+            <div class="topbar-right">
+                <div class="secure-pill">
+                    <span class="status-dot"></span>
+                    MODEL INTERFACE
+                </div>
+                <div class="avatar">GC</div>
             </div>
-            <div class="form-section-title section-spaced"><span class="number">02</span><div><strong>Health measurements</strong><small>Clinical and body measurements</small></div></div>
-            <div class="fields-grid">
-              <label class="field"><span>Glucose <i>mg/dL</i></span><div class="input-wrap"><input name="Glucose" type="number" min="0" max="400" step="any" placeholder="e.g. 110" required><span class="unit">mg/dL</span></div><small class="field-help">Plasma glucose concentration</small></label>
-              <label class="field"><span>Blood pressure <i>mmHg</i></span><div class="input-wrap"><input name="BloodPressure" type="number" min="0" max="250" step="any" placeholder="e.g. 72" required><span class="unit">mmHg</span></div><small class="field-help">Diastolic blood pressure</small></label>
-              <label class="field"><span>Skin thickness <i>mm</i></span><div class="input-wrap"><input name="SkinThickness" type="number" min="0" max="150" step="any" placeholder="e.g. 20" required><span class="unit">mm</span></div></label>
-              <label class="field"><span>Insulin <i>mu U/mL</i></span><div class="input-wrap"><input name="Insulin" type="number" min="0" max="1000" step="any" placeholder="e.g. 80" required><span class="unit">mu U/mL</span></div></label>
-              <label class="field"><span>BMI <i>kg/m²</i></span><div class="input-wrap"><input name="BMI" type="number" min="0" max="100" step="any" placeholder="e.g. 28.5" required><span class="unit">kg/m²</span></div></label>
-              <label class="field"><span>Diabetes pedigree function</span><div class="input-wrap"><input name="DiabetesPedigreeFunction" type="number" min="0" max="5" step="any" placeholder="e.g. 0.45" required><span class="unit">score</span></div><small class="field-help">A family-history related score in the dataset</small></label>
+        </header>
+
+        <!-- INTRO -->
+        <section class="page-intro">
+            <div class="intro-copy">
+                <span class="eyebrow">◈ AI-ASSISTED HEALTH ANALYTICS</span>
+                <h1>Decode your <span>health signals.</span></h1>
+                <p>
+                    Enter the required health measurements to estimate
+                    diabetes risk using the connected machine-learning model.
+                </p>
+
+                <div class="intro-tags">
+                    <span>01 / INPUT</span>
+                    <span>02 / ANALYSIS</span>
+                    <span>03 / RESULT</span>
+                </div>
             </div>
-            <div class="form-actions">
-              <button type="button" class="btn-secondary" id="reset-btn">Reset form</button>
-              <button type="submit" class="btn-primary" id="submit-btn"><span>Generate estimate</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+
+            <div class="intro-illustration" aria-hidden="true">
+                <div class="orb">
+                    <div class="art-ring"></div>
+                    <div class="art-center">G<span>+</span></div>
+                    <span class="spark spark-one">+</span>
+                    <span class="spark spark-two">✳</span>
+                    <span class="spark spark-three">■</span>
+                </div>
+                <div class="illustration-label">BIO-SIGNAL / 001</div>
             </div>
-            <p class="form-error" id="form-error" role="alert"></p>
-          </form>
         </section>
 
-        <aside class="results-column">
-          <section class="result-card" id="result-card" aria-live="polite">
-            <div class="result-top"><span class="result-icon">✦</span><span class="result-label">YOUR ESTIMATE</span><span class="result-status" id="result-status">Awaiting input</span></div>
-            <div id="empty-result" class="empty-result">
-              <div class="result-art"><div class="art-ring ring-a"></div><div class="art-ring ring-b"></div><div class="art-center">♡</div><span class="spark spark-a">✦</span><span class="spark spark-b">✧</span></div>
-              <h3>Your results will appear here</h3><p>Complete the assessment and select <strong>Generate estimate</strong> to see your model output.</p>
-            </div>
-            <div id="filled-result" class="filled-result hidden">
-              <div class="score-label">Model-estimated probability</div>
-              <div class="score-number"><span id="probability">—</span><small>%</small></div>
-              <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-              <div class="result-verdict" id="result-verdict">—</div>
-              <p class="result-message" id="result-message"></p>
-              <div class="result-note"><span>ⓘ</span><p>This percentage comes from the uploaded model. It is not a clinically validated personal risk score.</p></div>
-            </div>
-            <div class="result-divider"></div>
-            <div class="mini-stats"><div><span class="mini-icon">⌁</span><div><strong>8</strong><small>Input features</small></div></div><div><span class="mini-icon">◉</span><div><strong>ML</strong><small>Model powered</small></div></div></div>
-          </section>
-          <section class="tip-card"><div class="tip-icon">✧</div><div><strong>A helpful reminder</strong><p>Only a qualified healthcare professional can diagnose diabetes. If you have concerns, discuss them with your clinician.</p></div></section>
-        </aside>
-      </div>
+        <!-- ASSESSMENT GRID -->
+        <section class="content-grid" id="assessment">
 
-      <section class="how-card" id="how-it-works">
-        <div class="how-heading"><div><div class="section-kicker">THE PROCESS</div><h2>How it works</h2></div><p>A clear, simple workflow from inputs to an estimate.</p></div>
-        <div class="how-steps"><div class="how-step"><span>01</span><div><strong>Add measurements</strong><p>Fill in the eight fields using available health data.</p></div></div><div class="step-line"></div><div class="how-step"><span>02</span><div><strong>Run the model</strong><p>Your inputs are sent to the local Flask API.</p></div></div><div class="step-line"></div><div class="how-step"><span>03</span><div><strong>Review the output</strong><p>Use the result as an educational starting point only.</p></div></div></div>
-      </section>
-      <footer><span>glucocheck</span><span>Educational screening prototype · Not medical advice</span></footer>
+            <!-- INPUT FORM -->
+            <div class="form-card">
+                <div class="card-heading">
+                    <div>
+                        <span class="section-kicker">INPUT MODULE / 01</span>
+                        <h2>Health assessment</h2>
+                        <p>Enter all eight measurements below.</p>
+                    </div>
+                    <span class="step-pill">8 PARAMETERS</span>
+                </div>
+
+                <form id="prediction-form">
+
+                    <div class="form-section-title">
+                        <span class="number">01</span>
+                        PERSONAL PROFILE
+                    </div>
+
+                    <div class="fields-grid">
+                        <div class="field">
+                            <label for="Pregnancies">Pregnancies</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="Pregnancies"
+                                    name="Pregnancies"
+                                    min="0"
+                                    max="30"
+                                    step="1"
+                                    placeholder="e.g. 2"
+                                    required
+                                >
+                                <span class="unit">COUNT</span>
+                            </div>
+                            <small class="field-help">Number of pregnancies</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="Age">Age</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="Age"
+                                    name="Age"
+                                    min="1"
+                                    max="120"
+                                    step="1"
+                                    placeholder="e.g. 25"
+                                    required
+                                >
+                                <span class="unit">YEARS</span>
+                            </div>
+                            <small class="field-help">Age in years</small>
+                        </div>
+                    </div>
+
+                    <div class="form-section-title section-spaced">
+                        <span class="number">02</span>
+                        CLINICAL MEASUREMENTS
+                    </div>
+
+                    <div class="fields-grid">
+                        <div class="field">
+                            <label for="Glucose">Glucose</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="Glucose"
+                                    name="Glucose"
+                                    min="0"
+                                    max="500"
+                                    step="any"
+                                    placeholder="e.g. 120"
+                                    required
+                                >
+                                <span class="unit">MG/DL</span>
+                            </div>
+                            <small class="field-help">Plasma glucose concentration</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="BloodPressure">Blood pressure</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="BloodPressure"
+                                    name="BloodPressure"
+                                    min="0"
+                                    max="300"
+                                    step="any"
+                                    placeholder="e.g. 70"
+                                    required
+                                >
+                                <span class="unit">MM HG</span>
+                            </div>
+                            <small class="field-help">Diastolic blood pressure</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="SkinThickness">Skin thickness</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="SkinThickness"
+                                    name="SkinThickness"
+                                    min="0"
+                                    max="150"
+                                    step="any"
+                                    placeholder="e.g. 20"
+                                    required
+                                >
+                                <span class="unit">MM</span>
+                            </div>
+                            <small class="field-help">Triceps skin-fold thickness</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="Insulin">Insulin</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="Insulin"
+                                    name="Insulin"
+                                    min="0"
+                                    max="3000"
+                                    step="any"
+                                    placeholder="e.g. 80"
+                                    required
+                                >
+                                <span class="unit">MU U/ML</span>
+                            </div>
+                            <small class="field-help">Serum insulin measurement</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="BMI">Body mass index</label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="BMI"
+                                    name="BMI"
+                                    min="0"
+                                    max="100"
+                                    step="any"
+                                    placeholder="e.g. 28.5"
+                                    required
+                                >
+                                <span class="unit">BMI</span>
+                            </div>
+                            <small class="field-help">Body mass index value</small>
+                        </div>
+
+                        <div class="field">
+                            <label for="DiabetesPedigreeFunction">
+                                Diabetes pedigree
+                            </label>
+                            <div class="input-wrap">
+                                <input
+                                    type="number"
+                                    id="DiabetesPedigreeFunction"
+                                    name="DiabetesPedigreeFunction"
+                                    min="0"
+                                    max="5"
+                                    step="any"
+                                    placeholder="e.g. 0.45"
+                                    required
+                                >
+                                <span class="unit">DPF</span>
+                            </div>
+                            <small class="field-help">Family-history-related model feature</small>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="reset" class="btn-secondary" id="reset-btn">
+                            ↺ Reset fields
+                        </button>
+
+                        <button type="submit" class="btn-primary" id="submit-btn">
+                            <span>Run assessment</span>
+                            <span aria-hidden="true">↗</span>
+                        </button>
+                    </div>
+
+                    <div
+                        class="form-error"
+                        id="form-error"
+                        role="alert"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+                    <p class="result-note">
+                        Educational decision-support tool only. This estimate
+                        is not a medical diagnosis.
+                    </p>
+                </form>
+            </div>
+
+            <!-- RESULTS -->
+            <div class="results-column">
+
+                <section class="result-card" id="result-card">
+                    <div class="result-top">
+                        <div class="result-icon">✳</div>
+                        <div>
+                            <span class="result-label">MODEL OUTPUT / 02</span>
+                            <h2 id="result-status">Awaiting input</h2>
+                        </div>
+                        <span class="step-pill">LIVE</span>
+                    </div>
+
+                    <!-- EMPTY STATE -->
+                    <div class="empty-result" id="empty-result">
+                        <div class="result-art">
+                            <div class="art-ring"></div>
+                            <div class="art-center">?</div>
+                            <span class="spark spark-one">+</span>
+                            <span class="spark spark-two">■</span>
+                        </div>
+
+                        <h3>Signal not detected</h3>
+                        <p>
+                            Complete the assessment and run the model to see
+                            the returned prediction.
+                        </p>
+                        <div class="empty-code">AWAITING_PARAMETERS_000</div>
+                    </div>
+
+                    <!-- POPULATED STATE -->
+                    <div class="filled-result hidden" id="filled-result">
+                        <div class="score-label">MODEL ESTIMATED PROBABILITY</div>
+
+                        <div class="score-number">
+                            <span id="probability">0</span><span>%</span>
+                        </div>
+
+                        <div class="progress-track">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+
+                        <div class="result-verdict" id="result-verdict">
+                            Prediction result
+                        </div>
+
+                        <p class="result-message" id="result-message"></p>
+
+                        <div class="result-divider"></div>
+
+                        <div class="mini-stats">
+                            <div>
+                                <span class="mini-icon">◈</span>
+                                <div>
+                                    <strong>MODEL</strong>
+                                    <small>Connected classifier</small>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="mini-icon">⌁</span>
+                                <div>
+                                    <strong>OUTPUT</strong>
+                                    <small>Estimated probability</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tip-card">
+                    <div class="tip-icon">!</div>
+                    <div>
+                        <h3>Health notice</h3>
+                        <p>
+                            A model prediction cannot confirm or rule out
+                            diabetes. Consult a qualified healthcare
+                            professional for proper testing and advice.
+                        </p>
+                    </div>
+                </section>
+
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="how-card" id="how-it-works">
+            <div class="how-heading">
+                <span class="section-kicker">SYSTEM PIPELINE / 03</span>
+                <h2>From input to insight.</h2>
+            </div>
+
+            <div class="how-steps">
+                <div class="how-step">
+                    <span class="number">01</span>
+                    <div>
+                        <h3>Input</h3>
+                        <p>Enter the requested measurements.</p>
+                    </div>
+                </div>
+
+                <div class="step-line"></div>
+
+                <div class="how-step">
+                    <span class="number">02</span>
+                    <div>
+                        <h3>Inference</h3>
+                        <p>The trained model evaluates the input.</p>
+                    </div>
+                </div>
+
+                <div class="step-line"></div>
+
+                <div class="how-step">
+                    <span class="number">03</span>
+                    <div>
+                        <h3>Output</h3>
+                        <p>Review the model's estimated result.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <span>GLUCOCHECK © 2026</span>
+            <span>AI-ASSISTED ESTIMATION · NOT A DIAGNOSIS</span>
+        </footer>
+
     </main>
-  </div>
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</div>
 </body>
 </html>
