@@ -1,87 +1,202 @@
-from flask import Flask, render_template, request, jsonify
-import numpy as np
-import pickle
+# =====================================================
+# GLUCOCHECK - FLASK BACKEND
+# Loads the trained model and serves predictions.
+# =====================================================
+
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "diabetes_model.pkl"
+import joblib
+import numpy as np
+from flask import Flask, jsonify, render_template, request
+
+
+# -----------------------------------------------------
+# APP CONFIGURATION
+# -----------------------------------------------------
 
 app = Flask(__name__)
 
+# Project root directory
+BASE_DIR = Path(__file__).resolve().parent
+
+# Trained model path
+MODEL_PATH = BASE_DIR / "diabetes_model.pkl"
+
+
+# -----------------------------------------------------
+# MODEL FEATURE ORDER
+# IMPORTANT: Keep this order consistent with training.
+# -----------------------------------------------------
+
 FEATURES = [
-    "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
-    "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
+    "Pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
 ]
 
-# This project uses the uploaded LogisticRegression model as provided.
-# The model expects these eight features in exactly this order.
-with MODEL_PATH.open("rb") as model_file:
-    model = pickle.load(model_file)
+
+# -----------------------------------------------------
+# LOAD TRAINED MODEL
+# -----------------------------------------------------
+
+try:
+    model = joblib.load(MODEL_PATH)
+    print("GlucoCheck: Model loaded successfully.")
+
+except Exception as error:
+    model = None
+    print(f"GlucoCheck: Could not load model: {error}")
 
 
-def validate_payload(payload):
-    values = []
-    errors = {}
-    limits = {
-        "Pregnancies": (0, 20),
-        "Glucose": (0, 400),
-        "BloodPressure": (0, 250),
-        "SkinThickness": (0, 150),
-        "Insulin": (0, 1000),
-        "BMI": (0, 100),
-        "DiabetesPedigreeFunction": (0, 5),
-        "Age": (1, 120),
-    }
-    for feature in FEATURES:
-        raw = payload.get(feature)
-        try:
-            value = float(raw)
-            if not np.isfinite(value):
-                raise ValueError
-            low, high = limits[feature]
-            if value < low or value > high:
-                errors[feature] = f"Enter a value between {low} and {high}."
-            else:
-                values.append(value)
-        except (TypeError, ValueError):
-            errors[feature] = "Enter a valid number."
-    return values, errors
+# -----------------------------------------------------
+# HOME PAGE
+# -----------------------------------------------------
 
-
-@app.get("/")
+@app.route("/", methods=["GET"])
 def home():
     return render_template("index.html")
 
 
-@app.get("/api/health")
-def health():
-    return jsonify({"status": "ok", "model_loaded": model is not None})
+# -----------------------------------------------------
+# PREDICTION API
+# Endpoint: POST /api/predict
+# -----------------------------------------------------
 
-
-@app.post("/api/predict")
+@app.route("/api/predict", methods=["POST"])
 def predict():
-    payload = request.get_json(silent=True) or request.form.to_dict()
-    values, errors = validate_payload(payload)
-    if errors:
-        return jsonify({"success": False, "errors": errors}), 400
 
-    features = np.asarray(values, dtype=float).reshape(1, -1)
-    prediction = int(model.predict(features)[0])
-    probability = float(model.predict_proba(features)[0][1]) if hasattr(model, "predict_proba") else None
-    probability_percent = round(probability * 100, 1) if probability is not None else None
+    # Ensure the model is available.
+    if model is None:
+        return jsonify({
+            "error": (
+                "The prediction model could not be loaded. "
+                "Check that diabetes_model.pkl exists and is valid."
+            )
+        }), 500
 
-    return jsonify({
-        "success": True,
-        "prediction": prediction,
-        "label": "Higher model-estimated likelihood" if prediction == 1 else "Lower model-estimated likelihood",
-        "probability": probability_percent,
-        "message": (
-            "The model flagged this input for follow-up. This is not a diagnosis."
-            if prediction == 1 else
-            "The model did not flag this input. This does not rule out diabetes."
-        )
-    })
+    # Read JSON submitted by app.js.
+    data = request.get_json(silent=True)
 
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "Invalid request. Please submit valid JSON data."
+        }), 400
+
+    # Check that every required feature is present.
+    missing_features = [
+        feature for feature in FEATURES
+        if feature not in data or data[feature] in (None, "")
+    ]
+
+    if missing_features:
+        return jsonify({
+            "error": "Missing required input fields.",
+            "missing_features": missing_features
+        }), 400
+
+    # Convert inputs to numeric values.
+    try:
+        values = []
+
+        for feature in FEATURES:
+            value = float(data[feature])
+
+            if not np.isfinite(value):
+                return jsonify({
+                    "error": f"{feature} must be a finite number."
+                }), 400
+
+            values.append(value)
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "error": "All input fields must contain valid numbers."
+        }), 400
+
+    # Use a 2D array in the exact order used during training.
+    input_data = np.array(values, dtype=float).reshape(1, -1)
+
+    # -------------------------------------------------
+    # MODEL INFERENCE
+    # -------------------------------------------------
+
+    try:
+        # Predicted class, typically 0 or 1.
+        prediction = int(model.predict(input_data)[0])
+
+        # Get the estimated probability for class 1.
+        if hasattr(model, "predict_proba"):
+            probabilities = model.predict_proba(input_data)[0]
+            classes = list(model.classes_)
+
+            if 1 not in classes:
+                return jsonify({
+                    "error": (
+                        "The trained model does not contain "
+                        "the expected positive class (1)."
+                    )
+                }), 500
+
+            positive_index = classes.index(1)
+            probability = float(probabilities[positive_index]) * 100
+
+        else:
+            # Do not invent a probability for models that
+            # do not support predict_proba().
+            return jsonify({
+                "error": (
+                    "This model does not support probability "
+                    "estimation. Use a compatible trained model."
+                )
+            }), 500
+
+        # Prepare user-facing result text.
+        if prediction == 1:
+            label = "Elevated model-estimated risk"
+            message = (
+                "The model predicts the positive class. "
+                "This result is not a diagnosis; consult a "
+                "qualified healthcare professional for evaluation."
+            )
+        else:
+            label = "Lower model-estimated risk"
+            message = (
+                "The model predicts the negative class. "
+                "This result does not rule out diabetes. "
+                "Consult a healthcare professional if you have concerns."
+            )
+
+        # Return the keys expected by app.js.
+        return jsonify({
+            "prediction": prediction,
+            "probability": round(probability, 2),
+            "label": label,
+            "message": message
+        }), 200
+
+    except Exception as error:
+        app.logger.exception("Prediction failed: %s", error)
+
+        return jsonify({
+            "error": (
+                "Prediction failed. Verify that the model "
+                "matches the input features and their order."
+            )
+        }), 500
+
+
+# -----------------------------------------------------
+# RUN DEVELOPMENT SERVER
+# -----------------------------------------------------
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False
+    )
